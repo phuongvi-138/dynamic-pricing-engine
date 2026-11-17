@@ -74,18 +74,34 @@ tab1, tab2 = st.tabs(["🎯 Đề xuất giá", "📊 Kết quả nghiên cứu"
 # Tab 1 — nhập thông tin, nhận giá đề xuất
 # =====================================================================
 with tab1:
+    EXAMPLES = [("Ví dụ 1 · giảm nhẹ", 5, "132_467", "2024-06-18", 3.3, 1.7),
+                ("Ví dụ 2 · giảm vừa", 5, "494_467", "2024-06-22", 3.5, 2.4),
+                ("Ví dụ 3 · giảm sâu", 18, "417_194", "2024-06-20", 3.3, 2.2)]
+
+    def use_example(cat_, key_, date_, stock_, exp_):
+        st.session_state["cat"], st.session_state["prod"], st.session_state["date"] = cat_, key_, date_
+        st.session_state["stock" + key_ + "_" + date_] = stock_
+        st.session_state["exp" + key_ + "_" + date_] = exp_
+
+    st.markdown("**Thử nhanh:**")
+    bcols = st.columns(3)
+    for col, (lab, *args) in zip(bcols, EXAMPLES):
+        col.button(lab, on_click=use_example, args=args, width="stretch")
+
     st.subheader("① Chọn sản phẩm và ngày")
     ST = E.series_table().sort_values("Nhu cầu TB/ngày", ascending=False)
     c1, c2 = st.columns([1, 2])
     cats = ["Tất cả"] + [int(c) for c in sorted(ST["Danh mục"].unique())]
-    cat = c1.selectbox("Danh mục", cats)
+    cat = c1.selectbox("Danh mục", cats, key="cat")
     sub = ST if cat == "Tất cả" else ST[ST["Danh mục"] == cat]
     labels = {r.key: f"Sản phẩm {r['Sản phẩm']} – cửa hàng {r['Cửa hàng']} (bán ~{num(r['Nhu cầu TB/ngày'], 1)}/ngày)" for _, r in sub.iterrows()}
     test_dates = [str(d) for d, sp in zip(E.dates, E.split) if sp == "test"]
     opts = list(labels); dk = default_key(E, test_dates[0])
-    key = c2.selectbox("Sản phẩm", opts, index=opts.index(dk) if dk in opts else 0, format_func=labels.get)
+    if st.session_state.get("prod") not in opts:
+        st.session_state["prod"] = dk if dk in opts else opts[0]
+    key = c2.selectbox("Sản phẩm (bấm vào rồi gõ để tìm, ví dụ: cửa hàng 132)", opts, format_func=labels.get, key="prod")
     THU = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ nhật"]
-    date = st.selectbox("Ngày", test_dates, format_func=lambda d: f"{pd.Timestamp(d):%d/%m/%Y} ({THU[pd.Timestamp(d).dayofweek]})")
+    date = st.selectbox("Ngày", test_dates, key="date", format_func=lambda d: f"{pd.Timestamp(d):%d/%m/%Y} ({THU[pd.Timestamp(d).dayofweek]})")
     s, j = E.key_index[key], E.date_index[date]
     f0 = float(E.F[s, j])
     st.caption(f"Nếu giữ giá gốc, mô hình dự báo hôm đó bán được khoảng **{num(f0, 1)} đơn vị**.")
@@ -95,8 +111,9 @@ with tab1:
     with st.form("inputs"):
         i1, i2, i3 = st.columns(3)
         price = i1.number_input("Giá gốc (đồng)", min_value=1000, value=20000, step=1000, key="price")
-        stock = i2.number_input("Số hàng đang có", min_value=0.0, value=round(1.3 * f0, 1), step=0.5, key="stock" + k)
-        expiring = i3.number_input("Trong đó hết hạn cuối ngày", min_value=0.0, value=round(0.3 * f0, 1), step=0.5, key="exp" + k,
+        st.session_state.setdefault("stock" + k, round(1.3 * f0, 1)); st.session_state.setdefault("exp" + k, round(0.3 * f0, 1))
+        stock = i2.number_input("Số hàng đang có", min_value=0.0, step=0.5, key="stock" + k)
+        expiring = i3.number_input("Trong đó hết hạn cuối ngày", min_value=0.0, step=0.5, key="exp" + k,
                                    help="Phần hàng cũ, không bán hết hôm nay thì phải bỏ.")
         overrides = {}
         with st.expander("Tùy chọn thêm"):
