@@ -1,7 +1,7 @@
 streamlit>=1.50
 altair>=5
 pyarrow
-scikit-learn
-numpy
-pandas
-joblib
+scikit-learn==1.6.1
+numpy==2.4.6
+pandas==2.2.3
+joblib==1.6.0

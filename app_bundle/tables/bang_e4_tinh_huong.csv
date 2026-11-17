@@ -1,0 +1,8 @@
+﻿Tình huống,Biên lợi nhuận thực tế (%),Engine ML (%),Luật cố định (%),Engine DQN (%)
+"Gốc (biên 30%, hạn dùng 2 ngày)",18.1,10.5,10.1,9.7
+Nhu cầu giảm 20% bất ngờ,15.4,10.1,8.6,9.3
+Nhu cầu tăng 20% bất ngờ,19.2,10.7,11.0,9.9
+Biên lợi nhuận 20%,6.4,11.0,10.8,
+Biên lợi nhuận 40%,29.8,10.1,9.3,
+Hạn dùng 1 ngày,-6.2,8.6,4.7,
+Hạn dùng 3 ngày,20.1,10.6,10.7,
