@@ -65,3 +65,36 @@ class PricingEngine:
                             "Doanh thu dự kiến": self.LV * sales, "Lợi nhuận dự kiến": profit})
         out["Đề xuất"] = np.arange(len(self.LV)) == int(np.argmax(profit))
         return out
+
+
+class PrecomputedEngine(PricingEngine):
+    """Bản toàn bộ chuỗi (8179): mô hình Random Forest quá lớn để nạp vào web, nên nhu cầu dự báo ở 6 mức giá
+    đã được CHÍNH mô hình đó tính sẵn trong Notebook 2 (Bước 11) cho mọi sản phẩm–ngày và các kịch bản
+    bật/tắt khuyến mãi của sàn, ngày lễ. Phần chọn giá (recommend) giữ nguyên, chạy trực tiếp theo tồn kho nhập vào."""
+
+    def __init__(self, bundle_dir: str):
+        self.dir = bundle_dir
+        self.meta = json.load(open(os.path.join(bundle_dir, "meta.json"), encoding="utf-8"))
+        d = np.load(os.path.join(bundle_dir, "data.npz"), allow_pickle=False)
+        self.QS, self.QH, self.FLAGV = d["QS"], d["QH"], d["FLAGV"]
+        self.PACT, self.REC, self.F = d["PACT"], d["REC"], d["F"]
+        self.keys, self.cat, self.store, self.prod = d["KEYS"], d["CAT"], d["STORE"], d["PROD"]
+        self.dates, self.split = d["DATES"], d["SPLIT"]
+        self.flags = list(self.meta["FLAGS"])
+        self.combos = [tuple(c) for c in self.meta["COMBOS"]]
+        self.LV = np.array(self.meta["LV"])
+        self.key_index = {k: i for i, k in enumerate(self.keys)}
+        self.date_index = {dt: i for i, dt in enumerate(self.dates)}
+
+    def feature_value(self, s: int, j: int, name: str) -> float:
+        return float(self.FLAGV[self.flags.index(name), s, j])
+
+    def feature_range(self, name: str):
+        return 0.0, 1.0
+
+    def forecast(self, s: int, j: int, overrides: dict | None = None) -> np.ndarray:
+        cur = tuple(int(round(float(self.FLAGV[i, s, j]))) for i in range(len(self.flags)))
+        want = tuple(int(round(float((overrides or {}).get(f, cur[i])))) for i, f in enumerate(self.flags))
+        if want == cur:
+            return self.QH[s, j].astype(np.float64)
+        return self.QS[self.combos.index(want), s, j].astype(np.float64)
