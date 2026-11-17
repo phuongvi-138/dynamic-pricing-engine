@@ -38,7 +38,7 @@ streamlit run app.py
 
 ## Triển khai miễn phí
 
-**Streamlit Community Cloud:** đăng nhập [share.streamlit.io](https://share.streamlit.io) bằng GitHub → *Create app* → chọn repo này, nhánh `main`, tệp `app.py` → *Deploy*.
+**Streamlit Community Cloud:** đăng nhập [share.streamlit.io](https://share.streamlit.io) bằng GitHub → *Create app* → chọn repo này, nhánh `main`, tệp `app.py` → *Advanced settings* chọn **Python 3.13** (cùng phiên bản Colab đã dùng để huấn luyện mô hình) → *Deploy*.
 
 ## Nguồn dữ liệu
 
